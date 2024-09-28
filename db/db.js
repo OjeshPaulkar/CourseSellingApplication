@@ -1,5 +1,18 @@
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
+const ObjectId = mongoose.Types.ObjectId;
+const dbURL = process.env.DB_URL;
+
+// Connect to MongoDB with proper error handling
+mongoose.connect(dbURL)
+        .then(() => {
+            console.log("Connected to MongoDB");
+        })
+        .catch((error) => {
+            console.error("Error connecting to MongoDB:", error);
+            process.exit(1); // Exit process with failure
+        });
+
 
 const User = new Schema({
     email: {type: String, unique: true},
@@ -14,11 +27,16 @@ const Admin = new Schema({
 })
 
 const Course = new Schema({
-    
+    title: String,
+    description: String,
+    price: Number,
+    imageUrl: String,
+    creatorId: ObjectId
 })
 
 const Purchases = new Schema({
-    
+    courseId: ObjectId,
+    userId: ObjectId
 })
 
 const userModel = mongoose.model("users", User);
