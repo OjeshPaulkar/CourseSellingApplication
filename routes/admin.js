@@ -31,7 +31,7 @@ adminRouter.post("/signup", async (req,res) => {
     })
         const verifiedData = inputSchema.safeParse(req.body);
         if(!verifiedData.success){
-            return res.status(403).json({message: "Please Enter Valid Data for SIgnUp ", error: verifiedData.error.issues});
+            return res.status(403).json({message: "Please Enter Valid Data for SignUp ", error: verifiedData.error.issues});
         }
         const { email, username, password } = req.body;
         const hashedPassword = await bcrypt.hash(password, 5);
