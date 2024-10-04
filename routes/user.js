@@ -34,9 +34,7 @@ userRouter.post("/signup", async (req,res) => {
         if(!verifiedData.success){
             return res.status(403).json({message: "Please Enter Valid Data for SignUp ", error: verifiedData.error.issues});
         }
-        console.log(verifiedData);
         const { email, username, password } = req.body;
-        console.log("2");
         const hashedPassword = await bcrypt.hash(password, 5);
 
         const signedUpUser = await userModel.create({
