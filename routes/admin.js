@@ -1,72 +1,76 @@
 const express = require("express");
-const { Router } = require("express");
-const adminRouter = Router();
+const router = express.Router();
+const adminRouter = router; 
 const app = express();
+const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const { z } = require("zod");
-const { userModel, adminModel, courseModel, purchaseModel } = require("../db/db");
-const JWT_SECREAT =process.env.JWT_SECREAT;
-const auth = require("../middlewares/index");
+const { adminModel } = require("../db/db");
+const auth = require("../middlewares/middleware");
 
 app.use(express.json());
 
-adminRouter.post("/signup", async (req,res) => {
-    try { 
-        const inputSchema = z.object({
-            email : z.string().email(),
-            username : z.string().min(7).max(20),
-            password : z.string()
-                        .min(7)
-                        .max(20)
-                        .refine((password) => /[A-Z]/.test(password), {
-                            message: "Password must consist of atleast one Upper case Character",
-                        })
-                        .refine((password) => /[a-z]/.test(password), {
-                            message: "Password must consist of atleast one Small case character",
-                        })
-                        .refine((password) => /[!@#$%^&*()+-]/.test(password), {
-                            message: "Password must consist of atleast one Special Character",
-                        })
-    })
-        const verifiedData = inputSchema.safeParse(req.body);
-        if(!verifiedData.success){
-            return res.status(403).json({message: "Please Enter Valid Data for SignUp ", error: verifiedData.error.issues});
-        }
-        const { email, username, password } = req.body;
-        const hashedPassword = await bcrypt.hash(password, 5);
-
-        const signedUpUser = await adminModel.create({
-            email,
-            username,
-            password: hashedPassword
+adminRouter.post("/signup", async(req,res) => {
+    const inputSchema = z.object({
+        email : z.string().email(),
+        username : z.string().min(7).max(20),
+        password : z.string()
+        .min(7)
+        .max(20)
+        .refine((password) => /[A-Z]/.test(password), {
+            message: "Password must consist of atleast one Upper case Character",
         })
-        res.status(200).json({msg: "you are Sucessfully Signed In", user: signedUpUser});
-    } catch (error) {
-        return res.status(500).json({msg: "There was an error in Server", err: error.message});
+        .refine((password) => /[a-z]/.test(password), {
+            message: "Password must consist of atleast one Small case character",
+        })
+        .refine((password) => /[!@#$%^&*()+-_]/.test(password), {
+            message: "Password must consist of atleast one Special Character",
+        })
+    })
+try {
+    const verifyInputs = inputSchema.safeParse(req.body);
+    if(!verifyInputs.success){
+        return res.status(403).json({msg: "Please Enter Valid Credentials" , err: verifyInputs.error.issues});
     }
+    const { email, username, password } = req.body;
+    const userAlreadyExists = await adminModel.findOne({
+        email,
+    })
+    if(userAlreadyExists){
+        return res.status(403).json({msg: "User Already Exists, Please Proceed With Login"});
+    }
+    const hashedPassword = await bcrypt.hash(password,5);
+    const newSignedUpAdminUser = await adminModel.create({
+        email,
+        username,
+        password : hashedPassword
+    })
+    return res.status(200).json({msg : "New Admin User Sucessfully SignedUp", newSignedUpAdminUser});
+} catch (error) {
+    return res.status(500).json({msg : "Something Went Wrong", err: error.message});
+} 
 })
 
-adminRouter.post("/signin", async (req,res) => {
+adminRouter.post("/signin", async ( req,res) => {
     try {
         const { email, password } = req.body;
-        const user = await adminModel.findOne({
+        const admin = await adminModel.findOne({
             email,
         })
-        if(!user){
-            return res.status(403).json({msg: "Invalid Email!"});
+        if(!admin){
+            return res.status(403).json({msg: "Invalid Email"});
         }
-        const verifyPassword = await bcrypt.compare(password, user.password);
-        if(!verifyPassword){
-            return res.status(403).json({msg: "Invalid Password!"});
+        const verifyPassword = bcrypt.compare(password, admin.password);
+        if(!verifyPassword) {
+            return res.status(403).json({msg : "Invalid Password"});
         }
-        const token = jwt.sign({
-            userId : user._id.toString(), 
-        }, JWT_SECREAT);
+        const jwtToken = jwt.sign({
+            userId : admin._id.toString(),
+        }, process.env.JWT_SECREAT);
 
-        return res.status(200).json({mag: "You are Successfully Signed In", token : token});
+        return res.status(200).json({msg : "User Sucessfully Signed In", token : jwtToken});
     } catch (error) {
-        return res.status(500).json({msg: "There was an error in Server", err: error.message});
+        return res.status(500).json({msg : "Something Went Wrong", err: error.message});
     }
 })
 

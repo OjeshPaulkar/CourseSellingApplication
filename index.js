@@ -18,7 +18,7 @@ mongoose.connect(dbURL)
         });
 
 // Import and use routes 
-const userRouter = require("./routes/user");
+const { userRouter } = require("./routes/user");
 const adminRouter = require("./routes/admin");
 const courseRouter = require("./routes/courses");
 

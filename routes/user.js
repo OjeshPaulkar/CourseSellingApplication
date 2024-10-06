@@ -1,13 +1,13 @@
 const express = require("express");
-const router = express.Router();
-const userRouter = router;
+const router = express.Router();  // const { Router } = require("express");
+const userRouter = router;        // const userRouter = Router();
 const app = express();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
-const { userModel, adminModel, courseModel, purchaseModel } = require("../db/db");
+const { userModel} = require("../db/db");
 const JWT_SECREAT =process.env.JWT_SECREAT;
-const auth = require("../middlewares/index");
+const auth = require("../middlewares/middleware");
 
 app.use(express.json());
 
@@ -25,7 +25,7 @@ userRouter.post("/signup", async (req,res) => {
                         .refine((password) => /[a-z]/.test(password), {
                             message: "Password must consist of atleast one Small case character",
                         })
-                        .refine((password) => /[!@#$%^&*()+-]/.test(password), {
+                        .refine((password) => /[!@#$%^&*()+-_]/.test(password), {
                             message: "Password must consist of atleast one Special Character",
                         })
      } )
@@ -79,4 +79,6 @@ userRouter.post("/course/purchase", (req,res) => {
     res.send({msg: "under development"})
 })
 
-module.exports = userRouter;
+module.exports = {
+    userRouter : userRouter,
+}
