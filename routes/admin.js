@@ -6,7 +6,8 @@ const { z } = require("zod");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { adminModel } = require("../db/db");
-const auth = require("../middlewares/middleware");
+const { adminAuth } = require("../middlewares/middleware");
+const JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET;
 
 app.use(express.json());
 
@@ -66,7 +67,7 @@ adminRouter.post("/signin", async ( req,res) => {
         }
         const jwtToken = jwt.sign({
             userId : admin._id.toString(),
-        }, process.env.JWT_SECREAT);
+        }, JWT_ADMIN_SECRET);
 
         return res.status(200).json({msg : "User Sucessfully Signed In", token : jwtToken});
     } catch (error) {
@@ -74,15 +75,15 @@ adminRouter.post("/signin", async ( req,res) => {
     }
 })
 
-adminRouter.post("/createcourse", auth,(req,res) => {
+adminRouter.post("/createcourse", adminAuth,(req,res) => {
     res.send({msg: "under development"})
 })
 
-adminRouter.delete("/deletecourse", auth,(req,res) => {
+adminRouter.delete("/deletecourse", adminAuth,(req,res) => {
     res.send({msg: "under development"})
 })
 
-adminRouter.post("/coursecontent", auth,(req,res) => {
+adminRouter.post("/coursecontent", adminAuth,(req,res) => {
     res.send({msg: "under development"})
 })
 

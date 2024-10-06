@@ -6,8 +6,8 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
 const { userModel} = require("../db/db");
-const JWT_SECREAT =process.env.JWT_SECREAT;
-const auth = require("../middlewares/middleware");
+const JWT_USER_SECRET =process.env.JWT_USER_SECRET;
+const { userAuth } = require("../middlewares/middleware");
 
 app.use(express.json());
 
@@ -63,7 +63,7 @@ userRouter.post("/signin", async (req,res) => {
         }
         const token = jwt.sign({
             userId : user._id.toString(), 
-        }, JWT_SECREAT);
+        }, JWT_USER_SECRET);
 
         return res.status(200).json({mag: "You are Successfully Signed In", token : token});
     } catch (error) {
@@ -71,8 +71,14 @@ userRouter.post("/signin", async (req,res) => {
     }
 })
 
-userRouter.get("/course", auth, (req,res) => {
-    res.send({msg: "under development", id: req.userId})
+
+userRouter.get("/course", userAuth, (req,res) => {
+    try {
+        res.send({msg: "under development", id: req.userId})
+    } catch (error) {
+        return res.status(500).json({msg: "Something Went Wrong", err: error.message});
+    }
+    
 })
 
 userRouter.post("/course/purchase", (req,res) => {
