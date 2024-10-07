@@ -5,7 +5,7 @@ const app = express();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { z } = require("zod");
-const { userModel} = require("../db/db");
+const { userModel, courseModel} = require("../db/db");
 const JWT_USER_SECRET =process.env.JWT_USER_SECRET;
 const { userAuth } = require("../middlewares/middleware");
 
@@ -72,13 +72,17 @@ userRouter.post("/signin", async (req,res) => {
 })
 
 
-userRouter.get("/course", userAuth, (req,res) => {
+userRouter.get("/course/bulk", userAuth, async (req,res) => {
     try {
-        res.send({msg: "under development", id: req.userId})
+        const allCources = await courseModel.find();
+        if(allCources.length > 1) {
+           return res.status(200).json({ courses : allCources});
+        }else {
+            return res.status(404).json({msg : "No Courses Found"});
+        }
     } catch (error) {
         return res.status(500).json({msg: "Something Went Wrong", err: error.message});
     }
-    
 })
 
 userRouter.post("/course/purchase", (req,res) => {
