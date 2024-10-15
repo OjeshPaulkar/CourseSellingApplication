@@ -65,7 +65,7 @@ userRouter.post("/signin", async (req,res) => {
             userId : user._id.toString(), 
         }, JWT_USER_SECRET);
 
-        return res.status(200).json({mag: "You are Successfully Signed In", token : token});
+        return res.status(200).json({msg: `Welcome ${user.username} You are Successfully Signed In`, token : token});
     } catch (error) {
         return res.status(500).json({msg: "There was an error in Server", err: error.message});
     }
@@ -92,3 +92,66 @@ userRouter.post("/course/purchase", (req,res) => {
 module.exports = {
     userRouter : userRouter,
 }
+
+
+userRouter.post("/signupPractice", async (req,res) => {
+    try {
+        const inputData = z.object({
+            username: z.string().min(7).max(20),
+            email : z.string().email(),
+            password : z.string()
+            .min(7)
+            .max(20)
+            .refine((password) => /[A-Z]/.test(password), {
+                message: "Password must consist of atleast one Upper case Character",
+            })
+            .refine((password) => /[a-z]/.test(password), {
+                message: "Password must consist of atleast one Small case character",
+            })
+            .refine((password) => /[!@#$%^&*()+-_]/.test(password), {
+                message: "Password must consist of atleast one Special Character",
+            })
+        })
+
+        const verifiedData = inputData.safeParse(req.body);
+        if(!verifiedData) {
+            return res.status(203).json({msg : "Invalid Input", error : verifiedData.error.issues});
+        }
+        const { username, email, password } = req.body;
+        const hashedPass = await bcrypt.hash(password, 5);
+
+        const signedUpUser = await userModel.create({
+            username,
+            email,
+            password : hashedPass
+        })
+
+        return res.status(200).json({msg : `Successful SignUp`, user : signedUpUser});
+    } catch (error) {
+        return res.status(500).json({err : "Somrthing Went Wrong", ERROR : error})
+    }
+    
+})
+
+
+userRouter.post("/signInPractice", async (req,res) => {
+    try {
+        const { email, password } = req.body;
+        const validUser = await userModel.findOne({
+            email,
+        })
+        if (!validUser) {
+            return res.status(203).json({msg : "Invalid Email"});
+        }
+        const validPass = await bcrypt.compare(password, validUser.password);
+        if(!validPass) {
+            return res.status(203).json({msg : "Invalid Password"});
+        }
+        const token = jwt.sign({
+            userId : validUser._id.toString(),
+        }, JWT_USER_SECRET);
+        return res.status(200).json({msg : `Welcome ${validUser.username} You are Successfully LogedIn`, token : token}) 
+    } catch (error) {
+        return res.status(500).json({err : "Somrthing Went Wrong", ERROR : error})
+    }
+})

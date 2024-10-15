@@ -115,7 +115,7 @@ adminRouter.delete("/deletecourse", adminAuth, async (req,res) => {
             _id : userId,
         })
         if(!adminDetails) {
-            return res.status(403).json({msg : "Admin does not exist"});
+            return res.status(403).json({msg : "There was problem identifying you, Please login agian"});
         }
         console.log("Admin Exists in records");
         const { courseId } = req.body;
@@ -143,8 +143,49 @@ adminRouter.delete("/deletecourse", adminAuth, async (req,res) => {
     } 
 })
 
-adminRouter.post("/coursecontent", adminAuth,(req,res) => {
-    res.send({msg: "under development"})
-})
+adminRouter.put("/updatecourse", adminAuth, async (req,res) => {
+   try {
+     const { userId } = req;
+     if(!userId) {
+         return res.status(203).json({msg : "Invalid Token, Please Login again"});
+     }
+     const adminDetails = await adminModel.findOne({
+         _id : userId,
+     })
+     if(!adminDetails) {
+         return res.status(403).json({msg : "There was problen identifying you, Please login again"});
+     }
+     console.log("Admin Exists");
+ 
+     const { courseId } = req.body;
+     let validCourse = undefined;
+    try {
+          validCourse = courseModel.findOne({
+          _id : courseId,
+      })
+    } catch (error) {
+         return res.status(403).json({msg : "Invalid CourseId Provided"})
+    }
+ 
+     if (validCourse.creatorId === userId) {
+         const updatedCourse = await courseModel.updateOne()
+     } else {
+         return res.status(203).json({msg : "This Course doesn not belongs to you"})
+     }
+ }
+   catch (error) {
+    return res.status(500).json({err : "Something Went Wrong"});
+   }})
 
-module.exports = adminRouter;
+module.exports = adminRouter;   //const adminRouter = require("filePath");
+
+//export default adminRouter;   ->   import adminRouter from "filePath"
+
+//Named Exports - write export in fornt of the component we want to export, can export multiple components
+//   -> To inport NamedExport in other file SYNTAX - > import { componentName } from "fileName"; 
+
+/*
+ES6 export default requires import. canot use multiple times in same file,
+CommonJS module.exports requires require. (Multiple)
+Named Export to easily export multiple components.
+*/

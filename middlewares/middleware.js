@@ -49,6 +49,21 @@ function adminAuth(req, res, next) {
     }
 }
 
+
+function userAuthPractice(req, res, next) {
+    const token = req.headers.token;
+    if(!token) {
+        return res.status(401).json({msg : "No Token Provided In headers, Authentication Denied"});
+    }
+    const verifyIdentity = jwt.verify(token, JWT_USER_SECRET);
+    if(!verifyIdentity) {
+        return res.status(401).json({msg : "Invalid Authentication"})
+    }
+
+    req.userId = verifyIdentity.userId;
+    next();
+}
+
 module.exports = {
     userAuth : userAuth,
     adminAuth : adminAuth
